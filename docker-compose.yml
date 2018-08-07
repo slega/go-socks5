@@ -1,0 +1,23 @@
+version: '3.0'
+
+services:
+  db:
+    image: go-socks5
+    restart: always
+    volumes:
+      - data-volume:/app
+    command: 
+     - bootstrap_db
+  go-socks5:
+    image: go-socks5
+    build: .
+    ports:
+    - "8000:8000"
+    - "8080:8080"
+    deploy:   
+     replicas: 1
+    restart: always
+    volumes:
+      - data-volume:/app
+volumes:
+    data-volume:

@@ -1,0 +1,21 @@
+#!/bin/sh
+ 
+if [ -f proxy_users.db ]; then
+   echo "File proxy_users.db exists."
+else
+cat << EOF | sqlite3 proxy_users.db
+PRAGMA foreign_keys=OFF;
+BEGIN TRANSACTION;
+CREATE TABLE 'users' (
+    'login'    TEXT NOT NULL,
+    'password'    TEXT,
+    'connection_limit'    INTEGER,
+    'connection_budget'    INTEGER,
+    PRIMARY KEY('login')
+) WITHOUT ROWID;
+INSERT INTO users VALUES('login_test','cHdk',1000,1000);
+COMMIT;
+EOF
+
+fi
+
