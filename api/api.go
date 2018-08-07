@@ -8,23 +8,24 @@ import (
 	"database/sql"
 	"log"
 	"strconv"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type user struct {
 	Login string
 	Password string
-	Connection_Limit int
-	Connection_Budget int
+	ConnectionLimit int
+	ConnectionBudget int
 }
 
 func (u *user) stringify() string {
 	if u.Password == "" {
-		return "\"" + u.Login + "\" ,\"\" ," + strconv.Itoa(u.Connection_Limit) + ", " +
-			strconv.Itoa(u.Connection_Budget)
+		return "\"" + u.Login + "\" ,\"\" ," + strconv.Itoa(u.ConnectionLimit) + ", " +
+			strconv.Itoa(u.ConnectionBudget)
 	}
 
-	return "\"" + u.Login + "\", \"" + u.Password + "\", " + strconv.Itoa(u.Connection_Limit) + ", " +
-		strconv.Itoa(u.Connection_Budget)
+	return "\"" + u.Login + "\", \"" + u.Password + "\", " + strconv.Itoa(u.ConnectionLimit) + ", " +
+		strconv.Itoa(u.ConnectionBudget)
 }
 
 func AddUser (cfg *SQLCredStorage) func(*fasthttp.RequestCtx) {
@@ -39,7 +40,7 @@ func AddUser (cfg *SQLCredStorage) func(*fasthttp.RequestCtx) {
 		if userDescription.Password != "" {
 			userDescription.Password = encode(userDescription.Password)
 		}
-		sqlStmt := "insert into users values (" + userDescription.stringify() + ");"
+		sqlStmt := "insert into " + cfg.UsersTable + " values (" + userDescription.stringify() + ");"
 		tx, err := db.Begin()
 		if err != nil {
 			log.Fatal(err)
@@ -62,7 +63,7 @@ func RemoveUser(cfg *SQLCredStorage) func(*fasthttp.RequestCtx) {
 		}
 		defer db.Close()
 		login := ctx.URI().LastPathSegment()
-		sqlStmt := "delete from users where login = \"" + string(login) +"\""
+		sqlStmt := "delete from " + cfg.UsersTable + " where " + cfg.LoginColumn + " = \"" + string(login) +"\""
 		tx, err := db.Begin()
 		if err != nil {
 			log.Fatal(err)

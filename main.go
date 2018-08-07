@@ -8,20 +8,46 @@ import (
 	"go-socks5/socks5"
 	"go-socks5/api"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/micro/go-config/source/file"
+	"github.com/micro/go-config"
+	"flag"
+	"fmt"
 )
 
 func main() {
+	configFlag := flag.String("conf", "", "location of configuration file")
+	flag.Parse()
+	if *configFlag == "" {
+		fmt.Println("No configuration file was specified\n")
+		return
+	}
+	config.Load(file.NewSource(
+		file.WithPath(*configFlag),
+	))
+
+	var conf struct {
+		UsersTable string `json:"usersTable"`
+		LoginColumn string `json:"loginColumn"`
+		DBtype string `json:"DBtype"`
+		ConnectionString string `json:"connectionString"`
+	}
+
+	if err := config.Scan(&conf); err != nil {
+		panic(err)
+	}
+
+	cfg := api.SQLCredStorage {
+		UsersTable: conf.UsersTable,
+		LoginColumn: conf.LoginColumn,
+		DBType: conf.DBtype,
+		ConnectionString: conf.ConnectionString,
+	}
+
 	var wg sync.WaitGroup
 	wg.Add(2)
 
 	go func() {
 		defer wg.Done()
-
-		cfg := api.SQLCredStorage {
-			"users",
-			"sqlite3",
-			"/Users/slega/go/src/go-socks5/proxy_users.db",
-		}
 
 		router := fasthttprouter.New()
 		router.POST("/user/", api.AddUser(&cfg))
@@ -36,7 +62,8 @@ func main() {
 		defer wg.Done()
 
 		conf := &socks5.Config{}
-		conf.Credentials = &api.SQLCredStorage{}
+		conf.Credentials = &cfg
+
 		server, err := socks5.New(conf)
 		if err != nil {
 			panic(err)

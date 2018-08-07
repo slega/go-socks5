@@ -1,0 +1,6 @@
+{
+  "usersTable": "users",
+  "loginColumn": "login",
+  "connectionString": "/Users/slega/go/src/go-socks5/proxy_users.db",
+  "DBType": "sqlite3"
+}
